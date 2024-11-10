@@ -255,9 +255,9 @@ impl fmt::Debug for Instant {
 }
 
 #[cfg(feature = "prost")]
-impl Into<prost_types::Timestamp> for Instant {
-    fn into(self) -> prost_types::Timestamp {
-        let dur = Duration::from_nanos(self.0);
+impl From<Instant> for prost_types::Timestamp {
+    fn from(value: Instant) -> Self {
+        let dur = Duration::from_nanos(value.0);
         let secs = if dur.as_secs() > i64::MAX as u64 {
             i64::MAX
         } else {
@@ -268,10 +268,19 @@ impl Into<prost_types::Timestamp> for Instant {
         } else {
             dur.subsec_nanos() as i32
         };
-        prost_types::Timestamp {
+        Self {
             seconds: secs,
             nanos: nsecs,
         }
+    }
+}
+
+#[cfg(feature = "prost")]
+impl From<prost_types::Timestamp> for Instant {
+    fn from(value: prost_types::Timestamp) -> Self {
+        const NANOS_PER_SEC: u64 = 1_000_000_000;
+        let nsecs = value.seconds as u64 * NANOS_PER_SEC + value.nanos as u64;
+        Self(nsecs)
     }
 }
 
